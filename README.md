@@ -1,3 +1,3 @@
 # DevOps Projects
 
-Please refer to the **"setup.txt"** in the respective projects/directories.
+Please refer to the **"README.md"** in the respective projects/directories.

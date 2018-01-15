@@ -1,0 +1,7 @@
+[Dragon_Server_Hosts]
+192.168.2.20  ansible_ssh_user=root ansible_ssh_pass=vagrant
+
+
+[Dragon_Manager_Hosts]
+192.168.2.30  ansible_ssh_user=root ansible_ssh_pass=vagrant
+

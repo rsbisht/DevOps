@@ -1,0 +1,185 @@
+---
+
+###  This role contains common plays that will run on all target host(s).
+###
+###      1). Setup Proxy
+###      2). Install/Copy Repo files
+###      3). Install common OS Packages
+###      4). Update TimeZone
+###      5). Configure NTP Service
+###      6). Install JDK_1.8.0_131
+###
+
+
+###  Setup Proxy
+
+
+   - name: Copy Proxy configuration script
+
+     template:
+          src: set_Proxy.sh.j2
+          dest: /tmp/set_Proxy.sh
+          mode: 0755
+     tags: copy_set_proxy_script
+
+
+   - name: Configure Proxy
+
+     command:
+          "sh /tmp/set_Proxy.sh"
+     tags: set_proxy
+
+
+###  Copy Repo Repo Files
+
+
+   - name: Copy the RHEL 7.2 repo file (If Applicable)
+
+     copy:
+        src: RHEL_7.2.repo
+        dest: /etc/yum.repos.d
+     when: "ansible_distribution == 'RedHat' and ansible_distribution_version == '7.2'"
+     tags: copy_rhel_7_2_repo
+
+
+   - name: Copy the RHEL 7.4 repo file (If Applicable)
+
+     copy:
+        src: RHEL_7.4.repo
+        dest: /etc/yum.repos.d
+     when: "ansible_distribution == 'RedHat' and ansible_distribution_version == '7.4'"
+     tags: copy_rhel_7_4_repo
+
+
+#   - name: Install CentOS Repos
+#
+#     command:
+#          "rpm -Uvh --force {{ centos_7_3_repo_installer_url }}"
+#     when: "ansible_distribution == 'CentOS' and ansible_distribution_version == '7.3.1611'"
+#     tags: install_centos_repo
+#     register: centos_repo
+#
+
+   - name: Install CentOS Repos
+
+     copy:
+        src: CentOS_7.4.repo
+        dest: /etc/yum.repos.d
+     when: "ansible_distribution == 'CentOS' and ansible_distribution_major_version == '7'"
+     tags: install_centos_repo
+
+
+
+###   - name: Upgrade installed OS Packages
+###
+###     yum:
+###          name: '*'
+###          state: latest
+
+
+   - name: Install additional OS Packages & Tools
+
+     yum:
+          name: "{{ item }}"
+          state: present
+     with_items:
+          - gcc
+          - make
+          - glib*
+          - net-tools
+          - sudo
+          - python
+          - perl
+          - ntp
+          - rsync
+          - vim
+          - bzip2
+          - unzip
+          - wget
+          - expect
+          - bc
+          - dos2unix
+          - tree
+     tags: install_os_packages
+
+
+   - name: Update the TimeZone
+
+     timezone:
+            name: "{{ local_timezone }}"
+     tags: set_timezone
+
+
+   - name: Generate NTP configuration file
+
+     template:
+          src: ntp.conf.j2
+          dest: /etc/ntp.conf
+     tags: generate_ntp_conf
+
+
+   - name: Enable NTP service
+
+     service:
+          name: ntpd
+          enabled: yes
+     tags: enable_ntp
+
+   - name: Re-start NTP service
+
+     service:
+          name: ntpd
+          state: restarted
+     tags: restart_ntp_service
+
+
+###     JDK_1.8.0_131 Setup
+#
+
+   - name: Remove the existing target software directory
+
+     file:
+          dest: "{{ target_software_location }}"
+          state: "absent"
+     tags: clear_target_software_location
+
+
+   - name: Create the target software directory
+
+     file:
+          dest: "{{ target_software_location }}"
+          owner: "{{ jdk8_owner }}"
+          group: "{{ jdk8_group }}"
+          state: "directory"
+     tags: create_target_software_directory
+
+
+   - name: Copy the JDK 1.8 to target software directory
+
+     copy:
+          src: "{{ jdk8_src_directory }}/{{ jdk8_src_file_name}}"
+          dest: "{{ target_software_location }}"
+          owner: "{{ jdk8_owner }}"
+          group: "{{ jdk8_group }}"
+     tags: copy_jdk8_kit
+
+
+   - name: Install JDK 1.8
+
+     unarchive:
+          src: "{{ target_software_location }}/{{ jdk8_src_file_name }}"
+          dest: "{{ jdk8_base_directory }}"
+          owner: "{{ jdk8_owner }}"
+          group: "{{ jdk8_group }}"
+          remote_src: yes
+     tags: install_jdk8
+
+
+   - name: Configure Java
+
+     command:
+          "alternatives --install /usr/bin/java java {{ jdk8_base_directory }}/jdk1.8.0_131/bin/java 1"
+     tags: configure_java
+
+
+...

@@ -1,0 +1,171 @@
+---
+###  This role cretes required Groups, Users & directories
+###  and installs Oracle 12c R2 Client on target host(s)
+#
+
+
+# Create required Groups & Users for Oracle 12c R2 Client
+
+   - name: Create OS group for OraInventory
+
+     group:
+          name: "{{ ora_inventory_group }}"
+          state: present
+
+
+   - name: Create OS group for Oracle DBA
+
+     group:
+          name: "{{ ora_dba_group }}"
+          state: present
+
+
+   - name: Create OS user for Oracle software
+
+     user:
+          name: "{{ ora_os_user }}"
+          group: "{{ ora_inventory_group }}"
+          groups: "{{ ora_inventory_group }},{{ ora_dba_group }}"
+          append: yes
+
+
+   - name: Reset the password of OS user for Oracle software
+
+     command:
+          "echo {{ ora_os_user_password }} | passwd --stdin {{ ora_os_user }}"
+
+
+   - name: Create Oracle Base Directory
+
+     file:
+         dest: "{{ ora_base_directory }}"
+         owner: "{{ ora_os_user }}"
+         group: "{{ ora_inventory_group }}"
+         state: "directory"
+         mode: 0755
+     tags: create_ora_base_directory
+
+
+   - name: Create Oracle Inventory Directory
+
+     file:
+         dest: "{{ ora_inventory_location }}"
+         owner: "{{ ora_os_user }}"
+         group: "{{ ora_inventory_group }}"
+         state: "directory"
+         mode: 0755
+     tags: create_ora_base_directory
+
+
+
+### Install Oracle 12c R2 Client on target host(s)
+#
+
+
+   - name: Remove the existing target software directory
+
+     file:
+         dest: "{{ target_software_location }}"
+         state: "absent"
+     tags: clear_target_software_location
+
+
+   - name: Re-create the target software directory
+
+     file:
+         dest: "{{ target_software_location }}"
+         owner: "{{ ora_os_user }}"
+         group: "{{ ora_inventory_group }}"
+         state: "directory"
+         mode: 0755
+     tags: create_target_software_location
+
+
+   - name: Copy the Oracle Client Installation Kit to target software directory
+
+     copy:
+         src: "{{ ora_client_src_directory }}/{{ ora_client_src_file_name }}"
+         dest: "{{ target_software_location }}"
+         owner: "{{ ora_os_user }}"
+         group: "{{ ora_inventory_group }}"
+     tags: copy_installation_kit
+
+
+   - name: Copy the response file
+
+     template:
+         src: ora_12cR2_client.rsp.j2
+         dest: "{{ target_software_location }}/ora_12cR2_client.rsp"
+         owner: "{{ ora_os_user }}"
+         group: "{{ ora_inventory_group }}"
+         mode: 0755
+     tags: copy_response_file
+
+
+   - name: Copy the installation script
+
+     template:
+         src: install_Ora12Client.sh.j2
+         dest: "{{ target_software_location }}/install_Ora12Client.sh"
+         owner: "{{ ora_os_user }}"
+         group: "{{ ora_inventory_group }}"
+         mode: 0755
+     tags: copy_installation_script
+
+
+   - name: Unarchive Oracle Client Installation Kit
+
+     unarchive:
+         src: "{{ target_software_location }}/{{ ora_client_src_file_name }}"
+         dest: "{{ target_software_location }}"
+         owner: "{{ ora_os_user }}"
+         group: "{{ ora_inventory_group }}"
+         remote_src: yes
+     tags: unarchive_installation_kit
+
+
+   - name: Install Oracle 12c R2 Client
+
+     command:
+          "runuser -l {{ ora_os_user }} -c '{{ target_software_location }}/install_Ora12Client.sh'"
+     tags: install_oracle_client
+
+
+   - name: Copy the tnsnames.ora
+
+     template:
+         src: tnsnames.ora.j2
+         dest: "{{ ora_home_directory }}/network/admin/tnsnames.ora"
+         owner: "{{ ora_os_user }}"
+         group: "{{ ora_inventory_group }}"
+         mode: 0755
+     tags: copy_tnsnames_ora
+
+
+   - name: Copy the sqlnet.ora
+
+     copy:
+         src: sqlnet.ora
+         dest: "{{ ora_home_directory }}/network/admin"
+         owner: "{{ ora_os_user }}"
+         group: "{{ ora_inventory_group }}"
+         mode: 0755
+     tags: copy_sqlnet_ora
+
+
+   - name: Run orainstRoot.sh script
+
+     command:
+          "sh {{ ora_inventory_location }}/orainstRoot.sh"
+     tags: run_orainstRoot
+
+
+#   - name: Remove the target software directory
+#
+#     file:
+#         dest: "{{ target_software_location }}"
+#         state: "absent"
+
+
+...
+

@@ -1,0 +1,80 @@
+Vagrant.configure("2") do |config|
+
+   config.vm.box = "RHEL/RHEL_7.4"
+   config.vm.box_url = "http://15.213.52.100:8080/repos/DevOps/Vagrant/boxes/RHEL_7.4.box"
+
+   ### config.vm.box_url = "file:///home/projects/DevOps/Vagrant/boxes/RHEL_7.4.box"
+   ### config.vm.box_url = "http://15.213.52.100:8080/repos/DevOps/Vagrant/boxes/CentOS_7.3.box"
+
+   config.ssh.username = "vagrant"
+   config.ssh.password = "vagrant"
+
+
+################################################################################################
+###                                                                                          ###
+###                       DRAGON Server Setup                                                ###
+###                                                                                          ###
+################################################################################################
+
+
+   config.vm.define "DRAGON_Server_01" do |dragon_server|
+
+      dragon_server.vm.provider "virtualbox" do |vb|
+         vb.name = "DRAGON_Server_01"
+         vb.memory = "4096"
+         vb.cpus = "3"
+      end
+
+      dragon_server.vm.host_name = "drgnserver01"
+
+      dragon_server.vm.network "private_network", ip: "192.168.2.20"
+      dragon_server.vm.network "forwarded_port", guest: 3306, host: 33060, protocol: "tcp"
+
+      dragon_server.vm.synced_folder "/home/work", "/work"
+
+      ### dragon_server.vm.provision "shell",
+      ###              path: "scripts/update_SSH.sh"
+
+      dragon_server.vm.provision "ansible" do |ansible|
+
+          ansible.playbook         = "configure_Dragon_Server.yml"
+          ansible.inventory_path   = "inventory/hosts"
+          ansible.limit            = "Dragon_Server_Hosts"
+          ansible.become           = true
+      end
+   end
+
+
+################################################################################################
+###                                                                                          ###
+###                       DRAGON Manager Setup                                               ###
+###                                                                                          ###
+################################################################################################
+
+   config.vm.define "DRAGON_Manager_01" do |dragon_manager|
+
+      dragon_manager.vm.provider "virtualbox" do |vb|
+         vb.name = "DRAGON_Manager_01"
+         vb.memory = "2048"
+         vb.cpus = "2"
+      end
+
+      dragon_manager.vm.host_name = "drgnmanager01"
+
+      dragon_manager.vm.network "private_network", ip: "192.168.2.30"
+
+      dragon_manager.vm.synced_folder "/home/work", "/work"
+
+      ### dragon_manager.vm.provision "shell",
+      ###              path: "scripts/update_SSH.sh"
+
+      dragon_manager.vm.provision "ansible" do |ansible|
+
+          ansible.playbook         = "configure_Dragon_Manager.yml"
+          ansible.inventory_path   = "inventory/hosts"
+          ansible.limit            = "Dragon_Manager_Hosts"
+          ### ansible.limit            = "all"
+          ansible.become           = true
+      end
+   end
+end

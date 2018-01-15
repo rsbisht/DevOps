@@ -1,0 +1,201 @@
+---
+###  This role prepares target host for Dragon Manager:
+###
+###      1). Creates target software directory
+###      2). Creates required Groups & Users
+###      3). Installs JDK 1.6
+###      4). Installs JBOSS 4.2.3
+###      5). Installs Dragon Manager
+###
+
+
+   - name: Remove the existing target software directory
+
+     file:
+         dest: "{{ target_software_location }}"
+         state: "absent"
+     tags: remove_target_software_directory
+
+   - name: Re-create the target software directory
+
+     file:
+          dest: "{{ target_software_location }}"
+          state: "directory"
+     tags: create_target_software_directory
+
+
+###   Create required Groups & Users for Dragon Manager
+
+   - name: Create OS group for Dragon Manager
+
+     group:
+          name: "{{ dragon_os_group }}"
+          state: present
+     tags: create_dragon_os_group
+
+#     register: dragon_os_group
+#   - debug: msg="{{dragon_os_group}}"
+
+   - name: Create OS user for Dragon Manager
+
+     user:
+          name: "{{ dragon_os_user_id }}"
+          group: "{{ dragon_os_group }}"
+          groups: "{{ dragon_os_group }}"
+          append: yes
+     tags: create_dragon_os_user
+
+#     register: create_dragon_os_user_id
+#   - debug: msg="{{create_dragon_os_user_id}}"
+
+
+   - name: Reset the password of OS user for Dragon Manager
+
+     command:
+          "echo {{ dragon_os_user_password }} | passwd --stdin {{ dragon_os_user_id }}"
+     tags: reset_dragon_os_user_password
+
+#     register: reset_password
+#   - debug: msg="{{reset_password}}"
+
+
+###     Install JDK 1.6
+#
+
+   - name: Copy the JDK 1.6 to target software directory
+
+     copy:
+          src: "{{ jdk6_src_directory }}/{{ jdk6_src_file_name}}"
+          dest: "{{ target_software_location }}"
+          owner: "{{ jdk6_owner }}"
+          group: "{{ jdk6_group }}"
+     tags: copy_jdk6_kit
+
+
+   - name: Install the JDK 1.6
+
+     command:
+          "rpm -Uvh {{ target_software_location }}/{{ jdk6_src_file_name}}"
+     tags: install_jdk6
+
+
+   - name: Configure Java
+
+     command:
+          "alternatives --install /usr/bin/java java /usr/java/jdk1.6.0_45/bin/java 2"
+     tags: configure_jdk6
+
+
+   - name: Set JDK 1.6 as default
+
+     command:
+          "echo \"2\" | alternatives --config java"
+     tags: set_jdk6_as_deault
+
+
+
+###  Install JBOSS 4.2.3
+#
+
+   - name: Copy the JBOSS Installation Kit to target software directory
+
+     copy:
+          src: "{{ jboss_src_directory }}/{{ jboss_src_file_name }}"
+          dest: "{{ target_software_location }}"
+     tags: copy_jboss_installation_kit
+
+
+   - name: Copy the JBOSS patch to target software directory
+
+     copy:
+          src: "{{ jboss_src_directory }}/{{ jboss_src_patch_file_name }}"
+          dest: "{{ target_software_location }}"
+     tags: copy_jboss_patch
+
+
+   - name: Unarchive a JBOSS Installation Kit
+
+     unarchive:
+          src: "{{ target_software_location }}/{{ jboss_src_file_name }}"
+          dest: "{{ jboss_base_directory }}"
+          owner: "{{ dragon_os_user_id }}"
+          group: "{{ dragon_os_group }}"
+          remote_src: yes
+     tags: unarchive_jboss_kit
+
+
+   - name: Unarchive a JBOSS patch
+
+     unarchive:
+          src: "{{ target_software_location }}/{{ jboss_src_patch_file_name }}"
+          dest: "{{ jboss_base_directory }}"
+          owner: "{{ dragon_os_user_id }}"
+          group: "{{ dragon_os_group }}"
+          remote_src: yes
+     tags: unarchive_jboss_patch
+
+
+   - name: Copy ant.properties file
+
+     copy:
+          src: ant.properties
+          dest: "{{ jboss_base_directory }}/jbossws-metro-bin-dist"
+          owner: "{{ dragon_os_user_id }}"
+          group: "{{ dragon_os_group }}"
+     tags: copy_ant_properties
+
+
+   - name: Install ANT
+
+     yum:
+          name: ant
+          state: present
+     tags: install_ant
+     register: install_ant
+
+
+   - name: Deploy the JBOSS patch
+
+     command:
+          "echo ant deploy-jboss423 -propertyfile {{ jboss_base_directory }}/jbossws-metro-bin-dist/ant.properties -buildfile {{ jboss_base_directory }}/jbossws-metro-bin-dist/build.xml"
+     tags: deploy_jobss_patch
+     register: deploy_patch
+#   - debug: msg="{{deploy_patch}}"
+
+
+
+### Install Dragon Manager on target host(s)
+#
+
+   - name: Copy the Dragon Manager Installation Kit
+
+     copy:
+          src: "{{ dragon_manager_src_directory }}/{{ dragon_manager_src_file_name }}"
+          dest: "{{ target_software_location }}"
+          owner: "{{ dragon_os_user_id }}"
+          group: "{{ dragon_os_group }}"
+          mode: 0755
+     tags: copy_dragon_manager_kit
+
+
+   - name: Copy Dragon Manager installation script
+
+     template:
+          src: install_dragon_manager.sh.j2
+          dest: "{{ target_software_location }}/install_dragon_manager.sh"
+          mode: 755
+     tags: copy_dragon_installation_script
+
+   - name: Run Dragon Manager Installation
+
+     command:
+          "sh {{ target_software_location }}/install_dragon_manager.sh"
+     tags: run_dragon_manager_installation
+     register: install_dragon_manager
+
+   - debug: msg="{{install_dragon_manager.stderr_lines}}"
+     tags: debug_dragon_manager_installation
+
+
+...
+

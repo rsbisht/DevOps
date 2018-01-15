@@ -1,0 +1,35 @@
+[core]
+name=OpenCall RPM Repository for Red Hat Enterprise Linux $releasever - $basearch - Base OS
+baseurl="https://repoman.in.rdlabs.hpecorp.net/mrepo/rhel7.2-server-$basearch/RPMS.os/"
+enabled=1
+gpgcheck=0
+sslverify=0
+
+[updates]
+name=OpenCall RPM Repository for Red Hat Enterprise Linux $releasever Updates - $basearch - Updates
+baseurl="https://repoman.in.rdlabs.hpecorp.net/mrepo/rhel7.2-server-$basearch/RPMS.updates/"
+enabled=1
+gpgcheck=0
+sslverify=0
+
+[3rd_party]
+name=OpenCall RPM Repository for 3rd party software - $basearch - 3rd-Party
+baseurl="https://repoman.in.rdlabs.hpecorp.net/mrepo/rhel7.2-server-$basearch/RPMS.oe-tools-3.5.el7/"
+enabled=1
+gpgcheck=0
+sslverify=0
+
+[RPMs_All]
+name=OpenCall RPM Repository for 3rd party software - $basearch - 3rd-Party
+baseurl="https://repoman.in.rdlabs.hpecorp.net/mrepo/rhel7.2-server-$basearch/disc1/"
+enabled=1
+gpgcheck=0
+sslverify=0
+
+[OE_Tools]
+name=OpenCall RPM Repository for 3rd party software - $basearch - OE-Tools
+baseurl="https://repoman.in.rdlabs.hpecorp.net/mrepo/rhel7.2-server-$basearch/RPMS.oe-tools-3.5.el7/"
+enabled=1
+gpgcheck=0
+sslverify=0
+

@@ -1,0 +1,9 @@
+## Common
+#
+local_timezone: "Asia/Kolkata"
+
+ntp_server: ntp.hpecorp.net
+
+proxy_server: 16.167.28.199
+proxy_server_port: 8080
+

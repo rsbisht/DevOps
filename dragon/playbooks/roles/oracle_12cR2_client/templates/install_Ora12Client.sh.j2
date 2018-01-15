@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+echo ""                                                                                >> ~/.bash_profile
+echo "export ORACLE_BASE={{ ora_base_directory }}"                                     >> ~/.bash_profile
+echo "export ORACLE_HOME={{ ora_home_directory }}"                                     >> ~/.bash_profile
+echo "export PATH=\$ORACLE_HOME/bin:\$PATH"                                            >> ~/.bash_profile
+echo "export LD_LIBRARY_PATH=\$ORACLE_HOME/lib:/lib:/usr/lib"                          >> ~/.bash_profile
+echo "export CLASSPATH=\$ORACLE_HOME/JRE:\$ORACLE_HOME/jlib:\$ORACLE_HOME/rdbms/jlib"  >> ~/.bash_profile
+echo ""                                                                                >> ~/.bash_profile
+
+{{ target_software_location }}/client/runInstaller  \
+             -ignoreSysPrereqs                 \
+	     -ignorePrereq                     \
+	     -waitforcompletion                \
+	     -showProgress                     \
+	     -silent                           \
+	     -responseFile {{ target_software_location }}/ora_12cR2_client.rsp | tee ~/install_Ora12Client.log

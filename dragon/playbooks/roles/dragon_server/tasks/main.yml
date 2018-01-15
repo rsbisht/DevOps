@@ -1,0 +1,347 @@
+---
+
+###  This role prepares target host for Dragon Server:
+###
+###      1). Create required Groups & Users
+###      2). Create target software directory
+###      3). Install Wildfly 10.1.0
+###      4). Install Dragon Server
+###      5). Setup Dragon Server
+###      6). Install Optional Dpacks
+###      7). Install Custom Dpacks
+###      8). Generate/Modify Configuration Files
+###      9). Add Flows
+###     10). Start Query & Loader Modules
+###
+
+
+
+###   Create required Groups & Users for Dragon Server
+
+   - name: Create OS group for Dragon Server
+
+     group:
+          name: "{{ dragon_os_group }}"
+          state: present
+     tags: create_dragon_os_group
+
+
+   - name: Create OS user for Dragon Server
+
+     user:
+          name: "{{ dragon_os_user_id }}"
+          group: "{{ dragon_os_group }}"
+          groups: "{{ dragon_os_group }}"
+          append: yes
+     tags: create_dragon_os_user
+
+
+   - name: Reset the password of OS user for Dragon Server
+
+     command:
+          "echo {{ dragon_os_user_password }} | passwd --stdin {{ dragon_os_user_id }}"
+     tags: reset_dragon_os_user_password
+
+#     register: reset_password
+#   - debug: msg="{{reset_password}}"
+
+
+### Create target software directory
+
+   - name: Create the target software directory
+
+     file:
+          dest: "{{ target_software_location }}"
+          state: "directory"
+          owner: "{{ dragon_os_user_id }}"
+          group: "{{ dragon_os_group }}"
+          mode: 0755
+     tags: create_target_software_directory
+
+
+
+###  Install Wildfly 10.1.0
+#
+
+   - name: Copy the Wildfly Installation Kit to target software directory
+
+     copy:
+          src: "{{ wildfly_src_directory }}/{{ wildfly_src_file_name }}"
+          dest: "{{ target_software_location }}"
+     tags: copy_wildfly_installation_kit
+
+
+   - name: Unarchive a Wildfly Installation Kit
+
+     unarchive:
+          src: "{{ target_software_location }}/{{ wildfly_src_file_name }}"
+          dest: "{{ wildfly_base_directory }}"
+          owner: "{{ wildfly_os_user_id }}"
+          group: "{{ wildfly_os_group }}"
+          remote_src: yes
+     tags: unarchive_wildfly_kit
+
+
+### Install Dragon Server on target host(s)
+#
+
+   - name: Copy the Dragon Server Installation Kit
+
+     copy:
+          src: "{{ dragon_server_src_directory }}/{{ dragon_server_src_file_name }}"
+          dest: "{{ target_software_location }}"
+          owner: "{{ dragon_os_user_id }}"
+          group: "{{ dragon_os_group }}"
+          mode: 0755
+     tags: copy_dragon_server_kit
+
+
+   - name: Install Dragon Server
+
+     yum:
+          name: "{{ target_software_location }}/{{ dragon_server_src_file_name }}"
+          state: present
+     tags: run_dragon_server_installation
+     register: install_dragon_server
+
+#   - debug: msg="{{install_dragon_server}}"
+#     tags: debug_dragon_server_installation
+
+
+###   - name: Install Dragon Server [ Not automated, need to run manually ]
+###
+###     command:
+###          "sh /opt/dragon/SERVER/setup/setup.sh << --responseFile=dragon-server.res >> "
+###     tags: setup_dragon_server
+###     register: dragon_server
+###           The setup is calling "com.hp.dragon.server.setup.Main"
+
+   - name: Copy Start, Stop Scripts
+
+     copy:
+          src: "{{ item }}"
+          dest: "{{ target_software_location }}"
+          owner: "{{ dragon_os_user_id }}"
+          group: "{{ dragon_os_group }}"
+          mode: 0755
+     with_items:
+          - start_loader_module.sh
+          - start_query_module.sh
+          - stop_loader_module.sh
+          - stop_query_module.sh
+     tags: copy_start_stop_scripts
+
+
+   - name: Copy file containing Optional Dpack List
+
+     copy:
+          src: optional_dpacks_list.txt
+          dest: "{{ target_software_location }}"
+          owner: "{{ dragon_os_user_id }}"
+          group: "{{ dragon_os_group }}"
+          mode: 0644
+     tags: copy_optional_dpacks_list
+
+
+   - name: Copy Optional Dpack installation script
+
+     template:
+          src: install_optional_dpacks.sh.j2
+          dest: "{{ target_software_location }}/install_optional_dpacks.sh"
+          mode: 0755
+     tags: copy_optional_dpack_installation_script
+
+
+   - name: Install Optional Dpacks
+
+     command:
+          "runuser -l {{ dragon_os_user_id }} -c '{{ target_software_location }}/install_optional_dpacks.sh'"
+     tags: install_optional_dpacks
+     register: dpacks
+
+#   - debug: msg="{{dpacks.stdout_lines}}"
+#     tags: debug_install_optional_dpacks
+
+
+### Install Custom Dpacks
+#
+
+   - name: Copy Custom Dpacks
+
+     copy:
+          src: "{{ item }}"
+          dest: "{{ target_software_location }}"
+          owner: "{{ dragon_os_user_id }}"
+          group: "{{ dragon_os_group }}"
+          mode: 0644
+     with_items:
+          - "{{ dragon_server_src_directory }}/custom_dpacks.tar.gz"
+          - custom_dpacks_list.txt
+     tags: copy_custom_dpacks
+
+
+   - name: Unarchive Custom Dpacks
+
+     unarchive:
+          src: "{{ target_software_location }}/custom_dpacks.tar.gz"
+          dest: "{{ target_software_location }}"
+          owner: "{{ dragon_os_user_id }}"
+          group: "{{ dragon_os_group }}"
+          remote_src: yes
+     tags: unarchive_custom_dpacks
+     register: unzip_files
+
+
+   - name: Copy custom Dpack installation script
+
+     template:
+          src: install_custom_dpacks.sh.j2
+          dest: "{{ target_software_location }}/install_custom_dpacks.sh"
+          mode: 0755
+     tags: copy_custom_dpack_installation_script
+
+
+   - name: Install Custom Dpacks
+
+     command:
+          "runuser -l {{ dragon_os_user_id }} -c '{{ target_software_location }}/install_custom_dpacks.sh'"
+     tags: install_custom_dpacks
+     register: install_dpacks
+
+   - debug: msg="{{install_dpacks.stdout_lines}}"
+     tags: debug_install_custom_dpacks
+
+
+### Copy config files
+#
+
+   - name: Copy file impala.xml
+
+     template:
+          src: impala.xml.j2
+          dest: "{{ dragon_shared_directory }}/etc/datasource/impala/impala.xml"
+          mode: 0644
+     tags: copy_impala_xml
+
+
+   - name: Copy file file-systems.xml
+
+     template:
+          src: file-systems.xml.j2
+          dest: "{{ dragon_shared_directory }}/etc/common/file-systems.xml"
+          mode: 0644
+     tags: copy_file_systems_xml
+
+
+   - name: Copy file keys.xml
+
+     template:
+          src: keys.xml.j2
+          dest: "{{ dragon_shared_directory }}/etc/common/keys.xml"
+          mode: 0644
+     tags: copy_keys_xml
+
+
+### Copy Flow files
+
+   - name: Copy Flow files
+
+     copy:
+          src: "{{ item }}"
+          dest: "{{ target_software_location }}"
+          owner: "{{ dragon_os_user_id }}"
+          group: "{{ dragon_os_group }}"
+          mode: 0755
+     with_items:
+          - "{{ dragon_server_src_directory }}/flows.tar.gz"
+          - "{{ dragon_server_src_directory }}/add_flows.sh"
+          - "{{ dragon_server_src_directory }}/create_flow_dir.sh"
+     tags: copy_flow_files
+
+   - name: Unarchive Flow Files
+
+     unarchive:
+          src: "{{ target_software_location }}/flows.tar.gz"
+          dest: "{{ target_software_location }}"
+          owner: "{{ dragon_os_user_id }}"
+          group: "{{ dragon_os_group }}"
+          remote_src: yes
+     tags: unarchive_flow_files
+     register: unzip_files
+
+
+   - name: Add Flow
+
+     command:
+          "runuser -l {{ dragon_os_user_id }} -c '{{ target_software_location }}/add_flows.sh'"
+     tags: add_flow
+
+
+   - name: Create Flow Dirs
+
+     command:
+          "runuser -l {{ dragon_os_user_id }} -c '{{ target_software_location }}/create_flow_dir.sh'"
+     tags: create_flow_dirs
+
+
+
+### Start Query & Loader Module
+
+   - name: Start Query Module
+
+     command:
+          "runuser -l {{ dragon_os_user_id }} -c '{{ target_software_location }}/start_query_module.sh'"
+     tags: start_query_module
+
+   - name: Start Loader Module
+
+     command:
+          "runuser -l {{ dragon_os_user_id }} -c '{{ target_software_location }}/start_loader_module.sh'"
+     tags: start_loader_module
+
+
+### Copy Sample Data
+
+   - name: Create directory for Sample Data
+
+     file:
+          dest: "{{ target_software_location }}/sample_data"
+          state: "directory"
+          owner: "{{ dragon_os_user_id }}"
+          group: "{{ dragon_os_group }}"
+          mode: 0755
+     tags: create_dir_for_sample_data
+
+
+   - name: Copy sample data
+
+     copy:
+          src: "{{ item }}"
+          dest: "{{ target_software_location }}/sample_data"
+          owner: "{{ dragon_os_user_id }}"
+          group: "{{ dragon_os_group }}"
+          mode: 0644
+     with_items:
+          - "{{ dragon_server_src_directory }}/sample_data/VHA_VOICEIMS_SGSN_PGW_SGW_MMSC.zip"
+          - "{{ dragon_server_src_directory }}/sample_data/VHA_CGNAT_CSVoice_Email_SMSC_CSSMS.zip"
+          - "{{ dragon_server_src_directory }}/sample_data/EBM_1_VHA_PF3_EBM_LC_C_03_01-20170808-113917.003334.csv.gz"
+          - "{{ dragon_server_src_directory }}/sample_data/EBM_2_VHA_PF3_EBM_LC_C_03_01-20170808-113957.003336.csv.gz"
+     tags: copy_sample_data
+
+   - name: Copy misc. scripts
+
+     copy:
+          src: "{{ item }}"
+          dest: "{{ target_software_location }}"
+          owner: "{{ dragon_os_user_id }}"
+          group: "{{ dragon_os_group }}"
+          mode: 0755
+     with_items:
+          - "{{ dragon_server_src_directory }}/copy_sample_data.sh"
+          - "{{ dragon_server_src_directory }}/start_process.sh"
+          - "{{ dragon_server_src_directory }}/update_etc_hosts.sh"
+     tags: copy_misc_scripts
+
+
+...
+

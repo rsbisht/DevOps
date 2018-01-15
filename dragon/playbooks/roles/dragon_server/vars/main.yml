@@ -1,0 +1,32 @@
+---
+
+dragon_os_group: dragon
+dragon_os_user_id: dragon
+dragon_os_user_password: dragon
+
+wildfly_src_directory: /home/softwares/wildfly
+wildfly_src_file_name: wildfly-10.1.0.Final.tar.gz
+
+wildfly_os_group: root
+wildfly_os_user_id: root
+
+dragon_server_src_directory: /home/softwares/dragon
+dragon_server_src_file_name: dragon-server-7.0.9-6053.x86_64.rpm
+
+target_software_location: /home/softwares/dragon
+
+wildfly_base_directory: /opt
+dragon_base_directory: /opt
+
+dragon_shared_directory: /var/opt/dragon/SERVER/shared
+
+hadoop_namenode_host: 15.213.52.225
+hadoop_impala_host: 15.213.52.226
+hadoop_impala_port: 21050
+hadoop_impala_db_name: drgndev_03
+# hadoop_impala_jdbc_url: jdbc:impala://15.213.52.226:21050/drgndev_03
+
+hadoop_rpc_port: 8020
+
+...
+

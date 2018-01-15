@@ -1,0 +1,7 @@
+[CentOS_7_4]
+name=OpenCall RPM Repository for CentOS $releasever - $basearch - Base OS
+baseurl="https://repoman.in.rdlabs.hpecorp.net/mrepo/centos7.4-server-$basearch/disc1/"
+enabled=1
+gpgcheck=0
+sslverify=0
+

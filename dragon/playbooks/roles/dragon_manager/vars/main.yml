@@ -1,0 +1,28 @@
+---
+
+dragon_os_group: dragon
+dragon_os_user_id: dragon
+dragon_os_user_password: dragon
+
+jboss_src_directory: /home/softwares/JBOSS
+jboss_src_file_name: jboss-4.2.3.GA-jdk6.zip
+jboss_src_patch_file_name: jbossws-metro-3.1.1.GA.zip
+
+dragon_manager_src_directory: /home/softwares/dragon
+dragon_manager_src_file_name: dragon-manager-7.0.2-982.x86_64.bin
+
+target_software_location: /home/softwares/dragon
+
+jdk6_src_directory: /home/softwares/java
+jdk6_src_file_name: jdk-6u45-linux-amd64.rpm
+
+jdk6_owner: root
+jdk6_group: root
+
+jdk6_base_directory: /opt
+jboss_base_directory: /opt
+dragon_base_directory: /opt
+
+
+...
+

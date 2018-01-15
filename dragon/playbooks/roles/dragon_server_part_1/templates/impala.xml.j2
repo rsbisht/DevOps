@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- =============================================== -->
+<!-- === Impala data source configuration          === -->
+<!-- =============================================== -->
+
+<configuration>
+	<general>
+		<encrypted-account>false</encrypted-account>
+	</general>
+
+        <datasource-group pool="10" priority="standardPriority">
+            <datasource id="impala-database">
+            <urls>
+                    <url>jdbc:impala://{{ hadoop_impala_host }}:{{ hadoop_impala_port }}/{{ hadoop_impala_db_name }}</url>
+                        </urls>
+                        <username>fake</username>
+                        <password>fake</password>
+                </datasource>
+        </datasource-group>
+
+
+<!--
+	<datasource-group pool="10" priority="standardPriority">
+		<datasource id="impala-test-NoAuth" timezone="UTC">
+		    <urls>
+			  <url>jdbc:impala://hadoop01.dragon.hp.lab:21050/benchmark</url>
+			  <url>jdbc:impala://hadoop02.dragon.hp.lab:21050/benchmark</url>
+			</urls>
+			<username>fake_but_should_not_be_empty</username>
+			<password>fake_but_should_not_be_empty</password>
+		</datasource>
+
+		<datasource id="impala-test-SSL-UsernamePassword" timezone="UTC">
+		    <urls>
+			 <url>jdbc:impala://localhost:21050;AuthMech=3;SSL=1;SSLKeyStore=C:\\Users\\bsmith\\Desktop\\keystore.jks;SSLKeyStorePwd=your_kayetsore_password</url>
+			</urls>
+			<username>EMi6VaC5W6L+FarZhfclaw==</username>
+			<password>EMi6VaC5W6L+FarZhfclaw==</password>
+		</datasource>
+	</datasource-group>
+-->
+</configuration>

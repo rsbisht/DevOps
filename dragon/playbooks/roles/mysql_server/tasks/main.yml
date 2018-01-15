@@ -1,0 +1,153 @@
+---
+# This role installs MySQL 5.7 on target host(s)
+#
+
+   - name: Remove the existing target software directory
+
+     file:
+         dest: "{{ target_software_location }}"
+         state: "absent"
+
+
+   - name: Re-create the target software directory
+
+     file:
+         dest: "{{ target_software_location }}"
+         state: "directory"
+
+
+   - name: Copy the MySQL Installation Kit to target software directory
+
+     copy:
+        src: "{{ mysql_src_directory }}/{{ mysql_src_file_name}}"
+        dest: "{{ target_software_location }}"
+     tags: copy_mysql_kit
+
+
+   - name: Untar the MySQL Installation Kit
+
+     unarchive:
+          src: "{{ target_software_location }}/{{ mysql_src_file_name}}"
+          dest: "{{ target_software_location }}"
+          remote_src: yes
+     tags: unarchive_mysql_kit
+     register: untar_mysql
+
+
+   - name: Untar the MySQL Installation Kit
+
+     command:
+         "tar -xvf {{ target_software_location }}/{{ mysql_src_file_name}} -C {{ target_software_location }}"
+     tags: untar_mysql_kit
+
+
+   - name: Uninstall existing MySQL Server
+
+     yum:
+        name: "{{ item }}"
+        state: absent
+     with_items:
+         - mariadb*
+         - pcp-pmda-mysql*
+         - mysql-community*
+     tags: remove_mysql_installation
+     register: remove_mysql
+#   - debug: msg="{{ remove_mysql }}"
+
+
+   - name: Remove MySQL old data and logs
+
+     file:
+         dest: "{{ item }}"
+         state: "absent"
+     with_items:
+         - "{{ mysql_data_dir }}"
+         - "{{ mysql_socket }}"
+         - "{{ mysql_daemon_log }}"
+         - "{{ mysql_daemon_pid_file }}"
+     tags: remove_mysql_old_data_and_logs
+
+
+   - name: Install MySQL Server
+
+     yum:
+        name: "{{ item }}"
+        state: present
+     with_items:
+         - "{{ target_software_location }}/mysql-community-common-5.7.18-1.el7.x86_64.rpm"
+         - "{{ target_software_location }}/mysql-community-common-5.7.18-1.el7.x86_64.rpm"
+         - "{{ target_software_location }}/mysql-community-libs-5.7.18-1.el7.x86_64.rpm"
+         - "{{ target_software_location }}/mysql-community-libs-compat-5.7.18-1.el7.x86_64.rpm"
+         - "{{ target_software_location }}/mysql-community-devel-5.7.18-1.el7.x86_64.rpm"
+         - "{{ target_software_location }}/mysql-community-client-5.7.18-1.el7.x86_64.rpm"
+         - "{{ target_software_location }}/mysql-community-server-5.7.18-1.el7.x86_64.rpm"
+     tags: install_mysql_server
+     register: install_mysql
+#   - debug: msg="{{ install_mysql }}"
+
+
+   - name: Copy MySQL configuration file
+
+     template:
+          src: my.cnf.j2
+          dest: /etc/my.cnf
+          mode: 0644
+     tags: copy_mysql_config_file
+
+   - name: Copy MySQL Initialization script
+
+     template:
+          src: initialize_mysql.sh.j2
+          dest: "{{ target_software_location }}/initialize_mysql.sh"
+          mode: 0755
+     tags: copy_initialize_mysql_script
+
+
+   - name: Copy password reset script for MySQL root user
+
+     template:
+          src: reset_mysql_root_password.sh.j2
+          dest: "{{ target_software_location }}/reset_mysql_root_password.sh"
+          mode: 0755
+     tags: copy_reset_mysql_root_password_script
+
+   - name: Copy start script for MySQL Server
+
+     template:
+          src: start_mysql.sh.j2
+          dest: "{{ target_software_location }}/start_mysql.sh"
+          mode: 0755
+     tags: copy_start_mysql_script
+
+
+###   - name: Initialize MySQL Server [Docker]
+###
+###     command:
+###          "sh {{ target_software_location }}/initialize_mysql.sh"
+###     tags: initialize_mysql
+###     register: initialize_mysql
+###
+###   - name: Start MySQL Server [Docker]
+###
+###     command:
+###          "sh {{ target_software_location }}/start_mysql.sh"
+###     tags: start_mysqld_service
+###     register: start_mysqld_service
+
+
+   - name: Start MySQL Server
+
+     service: name=mysqld state=started
+     tags: start_mysqld_service
+
+
+   - name: Reset MySQL root password
+
+     command:
+          "sh {{ target_software_location }}/reset_mysql_root_password.sh"
+     tags: reset_mysql_root_password
+     register: reset_mysql_password
+   - debug: msg="{{ reset_mysql_password }}"
+
+
+...

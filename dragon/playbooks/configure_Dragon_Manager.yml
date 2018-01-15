@@ -1,0 +1,22 @@
+---
+###    This is the main playbook which calls other role(s) to setup the target host(s).
+###
+###    Note: 
+###        Use "- hosts: all", if called from "Vagrantfile"
+###
+###
+### - hosts: all
+
+### - hosts: "{{ dragon_manager_hosts }}"
+
+  - hosts: Dragon_Manager_Hosts
+
+    roles:
+
+    - common
+    - mysql_server
+#    - oracle_12cR2_client
+    - dragon_manager
+
+...
+

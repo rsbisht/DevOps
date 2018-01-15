@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<file-systems>
+    <!-- example LOCAL filesystem -->
+
+   <file-system id="writer001" plugin="localFileSystem">
+        <location>{{ dragon_shared_directory }}/writer</location>
+    </file-system>
+     <file-system id="writer002" plugin="localFileSystem">
+        <location>{{ dragon_shared_directory }}/writer</location>
+    </file-system>
+     <file-system id="writer003" plugin="localFileSystem">
+        <location>{{ dragon_shared_directory }}/writer</location>
+    </file-system>
+
+
+    <!-- example HADOOP filesystem -->
+    <file-system id="hdfs" plugin="hdfsFileSystem">
+		<location>/</location>
+		<active-service>
+			<host>{{ hadoop_namenode_host }}</host>
+			<rpc-port>{{ hadoop_rpc_port }}</rpc-port>
+		</active-service>
+		<standby-service>
+			<host>{{ hadoop_namenode_host }}</host>
+			<rpc-port>{{ hadoop_rpc_port }}</rpc-port>
+		</standby-service>
+		<authentication>simple</authentication>
+		<encrypted-account>false</encrypted-account>
+    </file-system>
+    
+    <!-- example REMOTE filesystem -->
+<!--    <file-system id="remote" plugin="remoteFileSystem">
+		<location>/tmp</location>
+		<host>hadoop01.dragon.hp.lab:22</host>
+        <username>dragon</username>
+        <password>dragon</password>
+		<encrypted-account>false</encrypted-account>
+    </file-system> -->
+</file-systems>
+
+

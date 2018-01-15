@@ -1,0 +1,19 @@
+---
+
+# centos_7_4_repo_installer_url: "http://mirror.centos.org/centos-7/7.4.1708/os/x86_64/Packages/centos-release-7-4.1708.el7.centos.x86_64.rpm"
+
+centos_7_3_repo_installer_url: "http://mirror.centos.org/centos-7/7.3.1611/os/x86_64/Packages/centos-release-7-3.1611.el7.centos.x86_64.rpm"
+
+
+jdk8_src_directory: /home/softwares/java
+jdk8_src_file_name: jdk-8u131-linux-x64.tar.gz
+
+target_software_location: /home/softwares/java
+
+jdk8_base_directory: /opt
+jdk8_owner: root
+jdk8_group: root
+jdk8_file_permissions: 0644
+
+...
+

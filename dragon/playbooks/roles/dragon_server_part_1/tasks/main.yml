@@ -1,0 +1,140 @@
+---
+
+###  This role prepares target host for Dragon Server:
+###
+###      1). Create target software directory
+###      2). Create required Groups & Users
+###      3). Install Wildfly 10.1.0
+###      4). Install Dragon Server
+###      5). Setup Dragon Server
+###      6). Install Optional Dpacks
+###      7). Install Custom Dpacks
+###      8). Generate/Modify Configuration Files
+###      9). Add Flows
+###     10). Start Query & Loader Modules
+###
+
+
+###   Create required Groups & Users for Dragon Server
+
+   - name: Create OS group for Dragon Server
+
+     group:
+          name: "{{ dragon_os_group }}"
+          state: present
+     tags: create_dragon_os_group
+
+
+   - name: Create OS user for Dragon Server
+
+     user:
+          name: "{{ dragon_os_user_id }}"
+          group: "{{ dragon_os_group }}"
+          groups: "{{ dragon_os_group }}"
+          append: yes
+     tags: create_dragon_os_user
+
+
+   - name: Reset the password of OS user for Dragon Server
+
+     command:
+          "echo {{ dragon_os_user_password }} | passwd --stdin {{ dragon_os_user_id }}"
+     tags: reset_dragon_os_user_password
+
+#     register: reset_password
+#   - debug: msg="{{reset_password}}"
+
+
+   - name: Create the target software directory
+
+     file:
+          dest: "{{ target_software_location }}"
+          state: "directory"
+          owner: "{{ dragon_os_user_id }}"
+          group: "{{ dragon_os_group }}"
+          mode: 0755
+     tags: create_target_software_directory
+
+
+
+###  Install Wildfly 10.1.0
+#
+
+   - name: Copy the Wildfly Installation Kit to target software directory
+
+     copy:
+          src: "{{ wildfly_src_directory }}/{{ wildfly_src_file_name }}"
+          dest: "{{ target_software_location }}"
+     tags: copy_wildfly_installation_kit
+
+
+   - name: Unarchive a Wildfly Installation Kit
+
+     unarchive:
+          src: "{{ target_software_location }}/{{ wildfly_src_file_name }}"
+          dest: "{{ wildfly_base_directory }}"
+          owner: "{{ wildfly_os_user_id }}"
+          group: "{{ wildfly_os_group }}"
+          remote_src: yes
+     tags: unarchive_wildfly_kit
+
+
+### Install Dragon Server on target host(s)
+#
+
+   - name: Copy the Dragon Server Installation Kit
+
+     copy:
+          src: "{{ dragon_server_src_directory }}/{{ dragon_server_src_file_name }}"
+          dest: "{{ target_software_location }}"
+          owner: "{{ dragon_os_user_id }}"
+          group: "{{ dragon_os_group }}"
+          mode: 0755
+     tags: copy_dragon_server_kit
+
+
+   - name: Install Dragon Server
+
+     yum:
+          name: "{{ target_software_location }}/{{ dragon_server_src_file_name }}"
+          state: present
+     tags: run_dragon_server_installation
+     register: install_dragon_server
+
+#   - debug: msg="{{install_dragon_server}}"
+#     tags: debug_dragon_server_installation
+
+
+###   - name: Install Dragon Server [ Not automated, need to run manually ]
+###
+###     command:
+###          "sh /opt/dragon/SERVER/setup/setup.sh << --responseFile=dragon-server.res >> "
+###     tags: setup_dragon_server
+###     register: dragon_server
+###           The setup is calling "com.hp.dragon.server.setup.Main"
+
+
+   - name: Copy the Expect file to target hosts
+
+     copy:
+          src: expect_dragon_server_setup.exp
+          dest: "{{ target_software_location }}"
+          owner: "{{ dragon_os_user_id }}"
+          group: "{{ dragon_os_group }}"
+          mode: 0755
+     tags: copy_expect_dragon_server_setup
+
+
+   - name: Install Dragon Server
+
+     command:
+          "expect {{ target_software_location }}/expect_dragon_server_setup.exp"
+     tags: setup_dragon_server
+     register: setup_dragon_server
+
+   - debug: msg="{{setup_dragon_server}}"
+     tags: debug_setup_dragon_server
+
+
+...
+

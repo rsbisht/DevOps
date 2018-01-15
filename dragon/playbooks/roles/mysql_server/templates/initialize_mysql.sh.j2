@@ -1,0 +1,6 @@
+/usr/sbin/mysqld --initialize            \
+       --explicit_defaults_for_timestamp \
+       --user=mysql                      \
+       --basedir=/usr                    \
+       --datadir={{ mysql_data_dir }}
+

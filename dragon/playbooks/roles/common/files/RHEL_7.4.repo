@@ -1,0 +1,13 @@
+[RHEL_7_4]
+name=OpenCall RPM Repository for Red Hat Enterprise Linux $releasever - $basearch - Base OS
+baseurl="https://repoman.in.rdlabs.hpecorp.net/mrepo/rhel7.4-server-$basearch/disc1/"
+enabled=1
+gpgcheck=0
+sslverify=0
+
+[OE_Tools]
+name=OpenCall RPM Repository for Red Hat Enterprise Linux $releasever - $basearch - OE-Tools
+baseurl="https://repoman.in.rdlabs.hpecorp.net/mrepo/rhel7.4-server-$basearch/RPMS.oe-tools-3.7.el7/"
+enabled=1
+gpgcheck=0
+sslverify=0

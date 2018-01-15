@@ -1,0 +1,24 @@
+---
+
+ora_client_src_directory: /home/softwares/oracle
+ora_client_src_file_name: linuxx64_12201_client.zip
+
+target_software_location: /home/softwares/oracle
+
+
+ora_os_user: oracle
+ora_os_user_password: oracle
+
+ora_inventory_group: oinstall
+ora_dba_group: dba
+
+ora_inventory_location: /opt/oraInventory
+ora_base_directory: /opt/oracle
+ora_home_directory: "{{ ora_base_directory }}/product/12.2.0.1/client_1"
+
+ora_db_server_host: 15.213.53.58
+ora_db_server_port: 1521
+ora_db_service_name: DRGSRV01
+
+...
+

@@ -1,0 +1,9 @@
+{{ ora_db_service_name }} =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = {{ ora_db_server_host }})(PORT = {{ ora_db_server_port }}))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = {{ ora_db_service_name }})
+    )
+  )
+
